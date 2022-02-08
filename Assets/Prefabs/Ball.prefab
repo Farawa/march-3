@@ -90,3 +90,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ballImage: {fileID: 221074609586450900}
+  moveSpeed: 4

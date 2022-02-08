@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,6 +10,12 @@ public class Field : MonoBehaviour
     [SerializeField] private GameObject cellPrefab;
     private static Dictionary<Vector2Int, Cell> cells;
     private Vector2 cellSize;
+    public static Action GenerateDone;
+
+    internal static Cell GetCell(Vector2Int index)
+    {
+        return cells[index];
+    }
 
     private void Start()
     {
@@ -30,26 +37,49 @@ public class Field : MonoBehaviour
                 cells.Add(new Vector2Int(j, i), cell);
                 cell.transform.localPosition = cellPosition;
                 cellPosition.x += spacing.x + cellSize.x;
-                if (j == 0)
-                    cell.Setup(CellType.spawner);
+                CellType cellType;
+                if (i == 0)
+                    cellType = CellType.spawner;
                 else
-                    cell.Setup(CellType.active);
+                    cellType = CellType.active;
+                cell.Setup(cellType, new Vector2Int(j, i));
             }
             cellPosition.x = startX;
             cellPosition.y -= spacing.y + cellSize.y;
         }
+        GenerateDone?.Invoke();
     }
 
-    public static Vector3 GetCellPosition(Vector2Int index)
+    public static Vector3? GetCellPosition(Vector2Int index)
     {
         Cell cell;
         if (cells.TryGetValue(index, out cell))
         {
             return cell.transform.position;
         }
-        else
+        return null;
+    }
+
+    public static void CaptureCell(Vector2Int index, int id)
+    {
+        cells[index].Capture(id);
+    }
+
+    public static void ClearCell(Vector2Int index)
+    {
+        cells[index].Clear();
+    }
+
+    public static bool IsCellFree(Vector2Int index)
+    {
+        Cell cell;
+        if (cells.TryGetValue(index, out cell))
         {
-            throw new System.Exception("cell not found");
+            if (cell)
+            {
+                return cells[index].captureBallId == -1 ? true : false;
+            }
         }
+        return false;
     }
 }
