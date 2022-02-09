@@ -1,6 +1,5 @@
-using System;
 using System.Collections;
-using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,12 +7,11 @@ public class Ball : MonoBehaviour
 {
     [SerializeField] private Image ballImage;
     [SerializeField] private float moveSpeed = 1;
-    private Vector2Int position;
-    private bool isMoving = false;
+    [SerializeField] private TextMeshProUGUI text;
     private BallColor color;
-    private int id;
-    public Vector2Int Position { get => position; }
-    public int Id { get => id; }
+    private bool isMoving = false;
+
+    public Vector2Int position;
     public BallColor BallColor { get => color; }
     public bool IsMoving { get => isMoving; }
 
@@ -23,11 +21,8 @@ public class Ball : MonoBehaviour
         this.position = position;
         transform.position = Field.GetCellPosition(position).Value;
         SetImageColor(color);
-    }
-
-    public void SetId(int id)
-    {
-        this.id = id;
+        BallsController.instance.SetBallPosition(this, position);
+        text.text = position.ToString();
     }
 
     private void SetImageColor(BallColor color)
@@ -43,43 +38,33 @@ public class Ball : MonoBehaviour
 
     public void MoveTo(Vector2Int index)
     {
-        isMoving = true;
+        StopAllCoroutines();
         StartCoroutine(Move(index));
     }
 
     private IEnumerator Move(Vector2Int targetIndex)
     {
-        Field.CaptureCell(targetIndex, id);
-        Field.ClearCell(position);
-        Moving.MoveOthersBall(position);
+        isMoving = true;
+        var oldPosition = position;
         position = targetIndex;
+        BallsController.instance.SetNewBallPotion(this, oldPosition, targetIndex);
+        Moving.MoveOthersBall(position);
+        text.text = position.ToString();
         var startPosition = transform.position;
         var targetPosition = Field.GetCellPosition(targetIndex).Value;
-        var totalMagnitude = (targetPosition - startPosition).magnitude;
-        var direction = (targetPosition - startPosition).normalized;
-        var distansTraveled = 0f;
+        var progress = 0f;
         while (true)
         {
-            var moveVector = direction * Time.deltaTime * moveSpeed;
-            transform.position += moveVector;
-            distansTraveled += moveVector.magnitude;
-            yield return null;
-            if (distansTraveled >= totalMagnitude)
+            progress += moveSpeed;
+            transform.position = (targetPosition - startPosition) * (progress / 100) + startPosition;
+            if (progress >= 100)
             {
                 transform.position = targetPosition;
                 break;
             }
+            yield return new WaitForFixedUpdate();
         }
-        if (CombinationsController.SearchCombinations(position, color))
-            yield break;
-        if (Moving.TryMoveBall(this))
+        if (!Moving.TryMoveBall(this))
             isMoving = false;
-    }
-
-    public void Reset()
-    {
-        StopAllCoroutines();
-        isMoving = false;
-        position = -Vector2Int.one;
     }
 }

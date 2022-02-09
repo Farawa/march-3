@@ -174,7 +174,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 565d28e1d67fc844ca4cc1efc7da59c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fieldSize: {x: 9, y: 9}
+  fieldSize: {x: 3, y: 9}
   spacing: {x: 10, y: 10}
   cellPrefab: {fileID: 186208272409320232, guid: f0f97d6f5ee104a478bebbe2e1f21736, type: 3}
 --- !u!114 &71677010

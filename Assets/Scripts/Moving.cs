@@ -4,23 +4,20 @@ using UnityEngine;
 
 public static class Moving
 {
-    public static async void MoveOthersBall(Vector2Int position)
+    public static void MoveOthersBall(Vector2Int position)
     {
         //TODO sides
-        var top = Direction.GetTop(position);
-        //var cell = Field.GetCell(currentIndex);
-        var topBall = BallsPool.TryGetBallFromAll(top);
+        var topPos = Direction.GetTop(position);
+        var topBall = BallsController.instance.GetBall(topPos);
         if (topBall)
         {
-            await System.Threading.Tasks.Task.Delay(100);
-            if (topBall.IsMoving) return;
             topBall.MoveTo(position);
         }
     }
 
     public static void MoveOthersBall(ref List<Vector2Int> positions)
     {
-        foreach(var pos in positions)
+        foreach (var pos in positions)
         {
             MoveOthersBall(pos);
         }
@@ -28,20 +25,33 @@ public static class Moving
 
     public static void TryMoveBall(Vector2Int index)
     {
-        var ball = BallsPool.TryGetBallFromAll(index);
-        TryMoveBall(ball);
+        var ball = BallsController.instance.GetBall(index);
+        if (ball)
+            TryMoveBall(ball);
     }
 
     public static bool TryMoveBall(Ball ball)
     {
-        //Vector2Int moveIndex;//TODO sides
-        var bot = Direction.GetBottom(ball.Position);
-        if (!ball) throw new System.Exception();
+
+        //Vector2Int movePosition;//TODO sides
+        var bot = Direction.GetBottom(ball.position);
         if (Field.IsCellFree(bot))
         {
+            var ballPos = ball.position;
             ball.MoveTo(bot);
+            if (ballPos.y == 0)
+            {
+                Field.instance.SpawnOnCell(ballPos);
+            }
             return true;
         }
-        return false;
+        else
+        {
+            var bottomBall = BallsController.instance.GetBall(bot);
+            if (bottomBall)
+                if (!bottomBall.IsMoving)
+                    CombinationsController.SearchCombinations(ball.position, ball.BallColor);
+            return false;
+        }
     }
 }

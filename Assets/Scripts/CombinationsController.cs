@@ -2,16 +2,20 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public static class CombinationsController 
+public static class CombinationsController
 {
-    public static bool SearchCombinations(Vector2Int position,BallColor ballColor)
+    public static bool SearchCombinations(Vector2Int position, BallColor ballColor)
     {
+        Debug.Log("search combinations");
         var list = new List<Vector2Int>();
         bool isCombinationFounded = false;
-        if (Combinations.TryGetRow3(position, ref list, ballColor))
-            isCombinationFounded = true;
+        Combinations.TryGetRow3(position, ref list, ballColor);
         //TODO other combinations
-        Blow(ref list);
+        if (list.Count != 0)
+        {
+            isCombinationFounded = true;
+            Blow(ref list);
+        }
         Moving.MoveOthersBall(ref list);
         return isCombinationFounded;
     }
@@ -21,7 +25,11 @@ public static class CombinationsController
         Debug.Log("blow");
         foreach(var pos in positions)
         {
-            BallsPool.AddBall(pos);
+            Debug.Log(pos);
+        }
+        foreach (var pos in positions)
+        {
+            BallsController.instance.DestroyBall(pos);
             //TODO add points
         }
     }

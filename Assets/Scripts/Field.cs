@@ -5,22 +5,40 @@ using UnityEngine;
 
 public class Field : MonoBehaviour
 {
+    public static Field instance = null;
+
     [SerializeField] private Vector2Int fieldSize;
     [SerializeField] private Vector2 spacing;
     [SerializeField] private GameObject cellPrefab;
-    private static Dictionary<Vector2Int, Cell> cells;
+    private static Dictionary<Vector2Int, Cell> cells = new Dictionary<Vector2Int, Cell>();
     private Vector2 cellSize;
     public static Action GenerateDone;
+    public Vector2Int FieldSize { get => fieldSize; }
 
-    internal static Cell GetCell(Vector2Int index)
+    private void Awake()
     {
-        return cells[index];
+        if (instance == null)
+            instance = this;
+        else
+            throw new Exception();
     }
 
     private void Start()
     {
-        cells = new Dictionary<Vector2Int, Cell>();
         GenerateField();
+    }
+
+    public void SpawnOnCell(Vector2Int position)
+    {
+        cells[position].Spawn();
+    }
+
+    internal static Cell GetCell(Vector2Int index)
+    {
+        Cell cell;
+        if(cells.TryGetValue(index,out  cell))
+            return cell;
+        return null;
     }
 
     private void GenerateField()
@@ -60,26 +78,10 @@ public class Field : MonoBehaviour
         return null;
     }
 
-    public static void CaptureCell(Vector2Int index, int id)
+    public static bool IsCellFree(Vector2Int position)
     {
-        cells[index].Capture(id);
-    }
-
-    public static void ClearCell(Vector2Int index)
-    {
-        cells[index].Clear();
-    }
-
-    public static bool IsCellFree(Vector2Int index)
-    {
-        Cell cell;
-        if (cells.TryGetValue(index, out cell))
-        {
-            if (cell)
-            {
-                return cells[index].captureBallId == -1 ? true : false;
-            }
-        }
-        return false;
+        var bottomBall = BallsController.instance.GetBall(position);
+        if (!GetCell(position)) return false;
+        return bottomBall ? false : true;
     }
 }
