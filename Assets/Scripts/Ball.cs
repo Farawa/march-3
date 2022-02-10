@@ -1,15 +1,21 @@
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class Ball : MonoBehaviour
+public class Ball : MonoBehaviour, IPointerDownHandler, IPointerMoveHandler,IPointerUpHandler
 {
     [SerializeField] private Image ballImage;
     [SerializeField] private float moveSpeed = 1;
     [SerializeField] private TextMeshProUGUI text;
     private BallColor color;
     private bool isMoving = false;
+    public bool isTouched = false;
+    private Vector3 startTouchPosition;
+    private float maxMouseMagnitude = 10;
+    public Action onEndMove;
 
     public Vector2Int position;
     public BallColor BallColor { get => color; }
@@ -36,20 +42,25 @@ public class Ball : MonoBehaviour
         ballImage.color = imageColor;
     }
 
-    public void MoveTo(Vector2Int index)
+    public void MoveTo(Vector2Int position)
     {
-        StopAllCoroutines();
-        StartCoroutine(Move(index));
+        //StopAllCoroutines();
+        var oldPosition = this.position;
+        this.position = position;
+        BallsController.instance.SetNewBallPotion(this, oldPosition, position);
+        StartCoroutine(SendMoveWithDelay(oldPosition));
+        text.text = this.position.ToString();
+        isMoving = true;
+        StartCoroutine(Move(position,true));
     }
 
-    private IEnumerator Move(Vector2Int targetIndex)
+    public void FreeMoveTo(Vector2Int position)
     {
-        isMoving = true;
-        var oldPosition = position;
-        position = targetIndex;
-        BallsController.instance.SetNewBallPotion(this, oldPosition, targetIndex);
-        Moving.MoveOthersBall(position);
-        text.text = position.ToString();
+        StartCoroutine(Move(position, false));
+    }
+
+    private IEnumerator Move(Vector2Int targetIndex, bool isNeedMoveAfter)
+    {
         var startPosition = transform.position;
         var targetPosition = Field.GetCellPosition(targetIndex).Value;
         var progress = 0f;
@@ -64,7 +75,38 @@ public class Ball : MonoBehaviour
             }
             yield return new WaitForFixedUpdate();
         }
-        if (!Moving.TryMoveBall(this))
-            isMoving = false;
+        if (isNeedMoveAfter)
+            if (!Moving.TryMoveBall(this))
+                isMoving = false;
+        onEndMove?.Invoke();
+        onEndMove = null;
+    }
+
+    private IEnumerator SendMoveWithDelay(Vector2Int position)
+    {
+        yield return new WaitForSeconds(0.05f);
+        Moving.MoveOthersBall(position);
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (isMoving) return;
+        startTouchPosition = Input.mousePosition;
+        isTouched = true;
+    }
+
+    public void OnPointerMove(PointerEventData eventData)
+    {
+        if (isMoving||!isTouched) return;
+        var mousePos = Input.mousePosition;
+        if (mousePos.x - startTouchPosition.x > maxMouseMagnitude) PlayerController.SwitchBalls(this,Direction.GetRight(position));//right
+        if (mousePos.x - startTouchPosition.x < -maxMouseMagnitude) PlayerController.SwitchBalls(this, Direction.GetLeft(position));//left
+        if (mousePos.y - startTouchPosition.y > maxMouseMagnitude) PlayerController.SwitchBalls(this, Direction.GetTop(position));//top
+        if (mousePos.y - startTouchPosition.y < -maxMouseMagnitude) PlayerController.SwitchBalls(this, Direction.GetBottom(position));//bottom
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        isTouched = false;
     }
 }

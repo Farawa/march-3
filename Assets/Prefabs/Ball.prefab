@@ -226,6 +226,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ballImage: {fileID: 221074609586450900}
-  moveSpeed: 3
+  moveSpeed: 5
   text: {fileID: 4342440364846268411}
   position: {x: 0, y: 0}

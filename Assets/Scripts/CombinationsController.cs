@@ -22,11 +22,12 @@ public static class CombinationsController
 
     private static void Blow(ref List<Vector2Int> positions)
     {
-        Debug.Log("blow");
+        var blowString = "blow ";
         foreach(var pos in positions)
         {
-            Debug.Log(pos);
+            blowString+=" "+pos;
         }
+        Debug.Log(blowString);
         foreach (var pos in positions)
         {
             BallsController.instance.DestroyBall(pos);

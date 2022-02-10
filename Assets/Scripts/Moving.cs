@@ -13,6 +13,10 @@ public static class Moving
         {
             topBall.MoveTo(position);
         }
+        else if (topPos.y == 0)
+        {
+            Field.instance.SpawnOnCell(topPos);
+        }
     }
 
     public static void MoveOthersBall(ref List<Vector2Int> positions)
@@ -37,20 +41,22 @@ public static class Moving
         var bot = Direction.GetBottom(ball.position);
         if (Field.IsCellFree(bot))
         {
-            var ballPos = ball.position;
             ball.MoveTo(bot);
-            if (ballPos.y == 0)
-            {
-                Field.instance.SpawnOnCell(ballPos);
-            }
+            
             return true;
         }
         else
         {
             var bottomBall = BallsController.instance.GetBall(bot);
             if (bottomBall)
+            {
                 if (!bottomBall.IsMoving)
+                {
                     CombinationsController.SearchCombinations(ball.position, ball.BallColor);
+                }
+            }
+            else
+                CombinationsController.SearchCombinations(ball.position, ball.BallColor);
             return false;
         }
     }
